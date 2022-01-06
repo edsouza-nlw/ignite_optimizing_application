@@ -1,40 +1,34 @@
-import { useEffect, useState } from 'react';
+import { memo } from 'react';
 import { MovieCard } from './MovieCard';
-import { api } from '../services/api';
 
 import '../styles/content.scss';
 
 interface GenreContentProps {
-  selectedGenreId: number;
-}
+  selectedGenre: {
+    id: number;
+    name: "action" | "comedy" | "documentary" | "drama" | "horror" | "family";
+    title: string;
+  };
 
-interface MovieProps {
-  imdbID: string;
-  Title: string;
-  Poster: string;
-  Ratings: Array<{
-    Source: string;
-    Value: string;
+  genreMovies: Array<{
+    imdbID: string;
+    Title: string;
+    Poster: string;
+    Ratings: Array<{
+      Source: string;
+      Value: string;
+    }>;
+    Runtime: string;
   }>;
-  Runtime: string;
 }
 
-export function Content(props: GenreContentProps) {
-  const [movies, setMovies] = useState<MovieProps[]>([]);
-
-  useEffect(() => {
-    api
-      .get<MovieProps[]>(`movies/?Genre_id=${props.selectedGenreId}`)
-      .then((response) => {
-        setMovies(response.data);
-      });
-  }, [props.selectedGenreId]);
+function ContentComponent({ selectedGenre, genreMovies }: GenreContentProps) {
 
   return (
     <>
       <main>
-        <div className="movies-list">
-          {movies.map((movie) => (
+        <div className='movies-list'>
+          {genreMovies.map((movie) => (
             <MovieCard
               key={movie.imdbID}
               title={movie.Title}
@@ -48,3 +42,7 @@ export function Content(props: GenreContentProps) {
     </>
   );
 }
+
+export const Content = memo(ContentComponent, (prevProps, nextProps) => {
+  return Object.is(prevProps.selectedGenre, nextProps.selectedGenre);
+});

@@ -1,30 +1,19 @@
-import { useEffect, useState } from 'react';
+import { memo } from 'react';
 import { Button } from './Button';
-
-import { api } from '../services/api';
 
 import '../styles/sidebar.scss';
 
 interface GenreSideBarProps {
+  genres: Array<{
+    id: number;
+    name: "action" | "comedy" | "documentary" | "drama" | "horror" | "family";
+    title: string;
+  }>;
   selectedGenreId: number;
-  handleClickButton: (id: number) => void;
+  buttonClickCallback: (args: any) => void;
 }
 
-interface GenreResponseProps {
-  id: number;
-  name: 'action' | 'comedy' | 'documentary' | 'drama' | 'horror' | 'family';
-  title: string;
-}
-
-export function SideBar(props: GenreSideBarProps) {
-  const [genres, setGenres] = useState<GenreResponseProps[]>([]);
-
-  useEffect(() => {
-    api.get<GenreResponseProps[]>('genres').then((response) => {
-      setGenres(response.data);
-    });
-  }, []);
-
+function SideBarComponent({ genres, selectedGenreId, buttonClickCallback }: GenreSideBarProps) {
   return (
     <nav className="sidebar">
       <span>
@@ -37,11 +26,16 @@ export function SideBar(props: GenreSideBarProps) {
             key={String(genre.id)}
             title={genre.title}
             iconName={genre.name}
-            onClick={() => props.handleClickButton(genre.id)}
-            selected={props.selectedGenreId === genre.id}
+            onClick={() => buttonClickCallback(genre.id)}
+            selected={selectedGenreId === genre.id}
           />
         ))}
       </div>
     </nav>
   );
 }
+
+export const SideBar = memo(SideBarComponent, (prevProps, nextProps) => {
+  return Object.is(prevProps, nextProps);
+});
+

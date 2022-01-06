@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import { SideBar } from './components/SideBar';
 import { Header } from './components/Header';
@@ -14,6 +14,17 @@ interface GenreResponseProps {
   title: string;
 }
 
+interface MovieProps {
+  imdbID: string;
+  Title: string;
+  Poster: string;
+  Ratings: Array<{
+    Source: string;
+    Value: string;
+  }>;
+  Runtime: string;
+}
+
 export function App() {
   const [selectedGenreId, setSelectedGenreId] = useState(1);
 
@@ -21,7 +32,22 @@ export function App() {
     {} as GenreResponseProps
   );
 
+  const [genres, setGenres] = useState<GenreResponseProps[]>([]);
+  const [movies, setMovies] = useState<MovieProps[]>([]);
+
   useEffect(() => {
+    api.get<GenreResponseProps[]>('genres').then((response) => {
+      setGenres(response.data);
+    });
+  }, []);
+
+  const getGenreCallback = useCallback(() => {
+    api
+      .get<MovieProps[]>(`movies/?Genre_id=${selectedGenreId}`)
+      .then((response) => {
+        setMovies(response.data);
+      });
+
     api
       .get<GenreResponseProps>(`genres/${selectedGenreId}`)
       .then((response) => {
@@ -29,20 +55,25 @@ export function App() {
       });
   }, [selectedGenreId]);
 
-  function handleClickButton(id: number) {
+  useEffect(() => {
+    getGenreCallback();
+  }, [selectedGenreId]);
+
+  const handleClickButton = useCallback((id: number) => {
     setSelectedGenreId(id);
-  }
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
       <SideBar
-        selectedGenreId={selectedGenre.id}
-        handleClickButton={handleClickButton}
+        genres={genres}
+        selectedGenreId={selectedGenreId}
+        buttonClickCallback={handleClickButton}
       />
 
-      <div className="container">
+      <div className='container'>
         <Header title={selectedGenre.title} />
-        <Content selectedGenreId={selectedGenreId} />
+        <Content selectedGenre={selectedGenre} genreMovies={movies} />
       </div>
     </div>
   );
